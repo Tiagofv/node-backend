@@ -11,6 +11,7 @@ var db = require('./database/db')
 
 app.use(cors())
 app.options('*', cors())
+//escolhemos a porta 3100 como padrão
 const port = process.env.PORT || '3100'
 
 // view engine setup
@@ -26,6 +27,7 @@ app.use(bodyParser.urlencoded({
 app.use(cookieParser())
 // app.use(express.static(path.join(__dirname, 'public')))
 
+//importamos as rotas 
 app.use('/', indexRouter)
 app.use('/users', usersRouter)
 app.use(bodyParser.json())
@@ -48,11 +50,12 @@ app.use(function(err, req, res, _) {
 	res.render('error')
 })
 
+// Inicia  o servidor
 app.listen(port, () => {
 	console.log(`Listening to requests on http://localhost:${port}`)
 })
+//finaliza o processo caso acabe
 process.on('SIGINT', () => { console.log("Bye bye!"); process.exit(); });
 
 
 module.exports = app
-66

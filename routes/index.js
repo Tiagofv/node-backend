@@ -1,3 +1,4 @@
+//importar dependencias
 var express = require("express");
 var router = express.Router();
 require("dotenv").config();
@@ -6,6 +7,9 @@ const bcrypt = require("bcrypt");
 const User = require("../database/models/users");
 const MessagesModel = require("../database/models/messsages");
 
+// Essa função é utilizada para verificar se o código JWT é válido
+// Se for válido , adiciona o id do usuário na request para futuro processamento
+// se não , retorna erro 500
 function verifyJWT(req, res, next) {
   var auth = req.headers["authorization"];
   if (!auth)
@@ -13,7 +17,6 @@ function verifyJWT(req, res, next) {
   const token = req.headers.authorization.split(" ")[1];
 
   jwt.verify(token, process.env.JWT_KEY, function (err, decoded) {
-    console.error(err);
     if (err)
       return res
         .status(500)
@@ -29,6 +32,8 @@ router.get("/", function (req, res, _) {
   res.render("index", { title: "Express" });
 });
 /* GET all users. */
+// Recupera todos usuários cadastrados
+//Não utilizado no app
 router.get("/users", async (req, res, _) => {
   const users = await User.find({});
   try {
@@ -38,12 +43,14 @@ router.get("/users", async (req, res, _) => {
     res.status(500).send(error);
   }
 });
-/* POST all users. */
-
+/* POST registers. */
+// Cria um novo usuário 
 router.post("/register", async (req, res) => {
   // Create a new user
   try {
+    //consulta ao banco
     const exists = await User.findOne({email: req.body.email})
+    // se não existir
     if(!exists){
       const user = new User(req.body);
       await user.save();
@@ -57,9 +64,11 @@ router.post("/register", async (req, res) => {
   }
 });
 //authentication
+// faz login
 router.post("/login", async (req, res) => {
   //Login a registered user
   try {
+    //desetrututando
     const { email, password } = req.body;
     const user = await User.findByCredentials(email, password);
     if (!user) {
@@ -67,6 +76,7 @@ router.post("/login", async (req, res) => {
         .status(401)
         .send({ error: "Login failed! Check authentication credentials" });
     }
+    //gera token
     const token = await user.generateAuthToken();
     return res.send({ user, token });
   } catch (error) {
@@ -74,6 +84,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
+//remove token
 router.get("/logout", verifyJWT, function (req, res) {
   res.status(200).send({ auth: false, token: null });
 });
@@ -87,9 +98,11 @@ router.get("/messages", verifyJWT, async (req, res) => {
 //DELETE -> Deleta
 //POST -> Cria alguma
 // new Message
+//cria mensagem
 router.post("/messages", verifyJWT, async (req, res) => {
   if (req.body.message) {
     let name = "";
+    //vemos o nome do usuário
     await User.findById(req.userId, (err, user) => {
       if (err) {
         return res.status(500).send(err);
@@ -97,6 +110,7 @@ router.post("/messages", verifyJWT, async (req, res) => {
         name = user.name;
       }
     });
+    //criamos um objeto da mensagem
     const message = {
       sent_by: req.userId,
       name: name,
@@ -104,6 +118,7 @@ router.post("/messages", verifyJWT, async (req, res) => {
       created_at: new Date(),
     };
     await MessagesModel.create(message, async (err, mess) => {
+      // se houver erro retorna erro
       if (err) {
         console.error(err)
         return res.status(422).send(err);

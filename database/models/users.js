@@ -3,6 +3,11 @@ const validator = require('validator')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 
+//modelo de usuários com os seguintes atributos
+// nome : string
+// occupation : string
+//email: String
+// password string
 const userSchema = mongoose.Schema({
     name: {
         type: String,
@@ -38,8 +43,8 @@ const userSchema = mongoose.Schema({
     }]
 })
 
+//Antes de salvar , fazemos o hash da senha do usuário
 userSchema.pre('save', async function (next) {
-    // Hash the password before saving the user model
     const user = this
     if (user.isModified('password')) {
         user.password = await bcrypt.hash(user.password, 8)
@@ -47,6 +52,7 @@ userSchema.pre('save', async function (next) {
     next()
 })
 
+//gera o token.
 userSchema.methods.generateAuthToken = async function() {
     // Generate an auth token for the user
     const user = this
@@ -56,8 +62,8 @@ userSchema.methods.generateAuthToken = async function() {
     return token
 }
 
+//acha um usuário por credenciais
 userSchema.statics.findByCredentials = async (email, password) => {
-    // Search for a user by email and password.
     const user = await User.findOne({ email} )
     if (!user) {
         throw new Error({ error: 'Invalid login credentials' })
